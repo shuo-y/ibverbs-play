@@ -6,8 +6,19 @@
 fn main() {
     println!("Hello, world!");
     
-    let dev = ibverbs::devices().unwrap().len();
+    let dev_num = ibverbs::devices().unwrap().len();
 
-    println!("Number of devices {} ", dev);
+    println!("Number of devices {} ", dev_num);
 
+    let dev = ibverbs::devices();
+
+    // Check the Result type
+    // See https://doc.rust-lang.org/rust-by-example/error/result/result_map.html
+    match dev {
+        Ok(n) => println!("numbers is {} ", n.len()),
+        Err(e) => println!("No device found {}", e),
+    }
+    
+    // Check the type https://stackoverflow.com/questions/21747136/how-do-i-print-the-type-of-a-variable-in-rust
+    // See also https://doc.rust-lang.org/std/any/fn.type_name.html
 }
