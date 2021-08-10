@@ -26,6 +26,13 @@ fn proc_dev(dev: Option<Device>) {
     }
 }
 
+// See https://doc.rust-lang.org/book/ch05-02-example-structs.html
+#[derive(Debug)]
+struct Ibdev {
+    name: String,
+    guid: u64,
+}
+
 fn main() {
     println!("Hello, world!");
     
@@ -47,4 +54,21 @@ fn main() {
     
     // Check the type https://stackoverflow.com/questions/21747136/how-do-i-print-the-type-of-a-variable-in-rust
     // See also https://doc.rust-lang.org/std/any/fn.type_name.html
+    // Pick 1st device
+
+    let dev_guid = ibverbs::devices()
+        .unwrap()
+        .get(0)
+        .unwrap()
+        .guid()
+        .unwrap();
+
+    println!("Dev guid {} ", dev_guid);
+
+    let dev = Ibdev {
+        name: "test".to_string(),  //See E0308
+        guid: dev_guid,
+    };
+
+    println!("Create a struct {:?} ", dev);
 }
