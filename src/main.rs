@@ -20,6 +20,7 @@ fn proc_dev(dev: Option<Device>) {
             // See https://github.com/jonhoo/rust-ibverbs/blob/master/examples/loopback.rs from github
             cq.poll(&mut comp);
             println!("Try to poll");
+            let _pd = ctx.alloc_pd().unwrap();
         },
         None =>  println!("no device"),
     }
