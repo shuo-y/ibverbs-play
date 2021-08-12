@@ -12,7 +12,7 @@ fn proc_dev(dev: Option<Device>) {
         Some(d) => {
             let guid_num = d.guid().unwrap();
             println!("The guid {} ", guid_num);
-            let ctx = d.open().unwrap();
+            let ctx = d.open().expect("cannot create ctx"); // Similar to unwrap
             println!("Check the ctx ");
             // create_cq  number of entries is 4 id is 1
             let cq = ctx.create_cq(4, 1).unwrap();
