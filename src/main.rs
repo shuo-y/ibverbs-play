@@ -3,6 +3,8 @@
 // See https://docs.rs/ibverbs/0.6.0/src/ibverbs/lib.rs.html
 // Refer to https://github.com/jonhoo/rust-ibverbs/commit/cfbb93771fd180c63ca0ff89d80121674239be9f
 // for the start
+// See https://doc.rust-lang.org/book/ch05-02-example-structs.html about #[derive(Debug)]
+
 
 use ibverbs::Device;
 
@@ -26,20 +28,7 @@ fn proc_dev(dev: Option<Device>) {
     }
 }
 
-// See https://doc.rust-lang.org/book/ch05-02-example-structs.html
-#[derive(Debug)]
-struct Ibdev {
-    name: String,
-    guid: u64,
-}
-
 fn main() {
-    println!("Hello, world!");
-    
-    let dev_num = ibverbs::devices().unwrap().len();
-
-    println!("Number of devices {} ", dev_num);
-
     let devices = ibverbs::devices();
 
     // Check the Result type
@@ -65,10 +54,4 @@ fn main() {
 
     println!("Dev guid {} ", dev_guid);
 
-    let dev = Ibdev {
-        name: "test".to_string(),  //See E0308
-        guid: dev_guid,
-    };
-
-    println!("Create a struct {:?} ", dev);
 }
