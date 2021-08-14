@@ -5,8 +5,8 @@
 // for the start
 // See https://doc.rust-lang.org/book/ch05-02-example-structs.html about #[derive(Debug)]
 
-
 use ibverbs::Device;
+use std::process::Command;
 
 fn proc_dev(dev: Option<Device>) {
     println!("Do something");
@@ -44,6 +44,13 @@ fn main() {
     // Check the type https://stackoverflow.com/questions/21747136/how-do-i-print-the-type-of-a-variable-in-rust
     // See also https://doc.rust-lang.org/std/any/fn.type_name.html
     // Pick 1st device
+
+    // https://doc.rust-lang.org/std/process/struct.Command.html
+    let ret = Command::new("sh")
+        .arg("-c")
+        .arg("ls -lah .")
+        .output()
+        .expect("Run failed");
 
     let dev_guid = ibverbs::devices()
         .unwrap()
