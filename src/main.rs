@@ -28,6 +28,22 @@ fn proc_dev(dev: Option<Device>) {
     }
 }
 
+// See https://doc.rust-lang.org/book/ch10-02-traits.html
+pub trait Logger {
+    fn print(&self);
+}
+
+pub struct Log {
+    pub id: u32,
+    pub content: String,
+}
+
+impl Logger for Log {
+    fn print(&self) {
+        println!("{} {}", self.id, self.content);
+    }
+}
+
 fn main() {
     let devices = ibverbs::devices();
 
