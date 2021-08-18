@@ -12,5 +12,12 @@ fn main() {
         keys.into_iter().zip(values.into_iter()).collect();
     table.insert(11, "w".to_string());
 
-    println!("{:?}", table);
+    // See https://doc.rust-lang.org/book/ch16-01-threads.html
+
+    let thread = std::thread::spawn( move || {
+        table.insert(13, "zoo".to_string());
+        println!("table[13] = {}", table[&13]);
+    });
+
+    thread.join().unwrap();
 }
