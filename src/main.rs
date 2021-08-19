@@ -68,6 +68,15 @@ fn main() {
         .output()
         .expect("Run failed");
 
+    // See rustc --explain E0515
+    // See https://doc.rust-lang.org/book/ch13-01-closures.html
+    let devices = ibverbs::devices().unwrap();
+    let get_dev = |x| {
+        devices.get(x)
+    };
+    // get_dev > 2 no error?
+    let tmp = get_dev(100);
+
     let dev_guid = ibverbs::devices()
         .unwrap()
         .get(0)
