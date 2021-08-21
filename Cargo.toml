@@ -7,3 +7,8 @@ edition = "2018"
 
 [dependencies]
 ibverbs = "0.5.0"
+rand = "0.8.3"
+
+[[bin]]
+name = "server"
+path = "src/server.rs"
