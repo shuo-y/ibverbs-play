@@ -46,34 +46,20 @@ fn main() {
 
     // Check the Result type
     // See https://doc.rust-lang.org/rust-by-example/error/result/result_map.html
-    match devices {
-        Ok(n) => {
-            println!("numbers is {} ", n.len());
-            proc_dev(n.get(0))
-        },
-        Err(e) => println!("No device found {}", e),
-    }
-    
     // Check the type https://stackoverflow.com/questions/21747136/how-do-i-print-the-type-of-a-variable-in-rust
-    // See also https://doc.rust-lang.org/std/any/fn.type_name.html
-    // Pick 1st device
-
-    // https://doc.rust-lang.org/std/process/struct.Command.html
-    let ret = Command::new("sh")
-        .arg("-c")
-        .arg("ls -lah .")
-        .output()
-        .expect("Run failed");
-
+    // See https://doc.rust-lang.org/std/any/fn.type_name.html
+    // See https://doc.rust-lang.org/std/process/struct.Command.html
     // See rustc --explain E0515
     // See https://doc.rust-lang.org/book/ch13-01-closures.html
     let devices = ibverbs::devices().unwrap();
     let get_dev = |x| {
         devices.get(x)
     };
-    // get_dev > 2 no error?
+    let get_dev_num = |x: &ibverbs::DeviceList| {
+        x.len()
+    };
+    println!("{}", get_dev_num(&devices));
     let tmp = get_dev(100);
-
     let dev_guid = ibverbs::devices()
         .unwrap()
         .get(0)
