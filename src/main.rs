@@ -29,5 +29,10 @@ fn main() {
     let dev_guid = dev.guid().unwrap();
 
     println!("Dev guid {} ", dev_guid);
+    let ctx = dev.open().unwrap();
+
+    let wr_num = 1024;
+    let send_cq = ctx.create_cq(wr_num, 0).unwrap();
+    let recv_cq = ctx.create_cq(wr_num, 1).unwrap();
 
 }
