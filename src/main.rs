@@ -5,10 +5,9 @@
 // for the start
 // See https://doc.rust-lang.org/book/ch05-02-example-structs.html about #[derive(Debug)]
 
-use ibverbs::Device;
 // use std::process::Command;
-use std::env;
-//use std::ffi::OsString;
+// use std::env;
+// use std::ffi::OsString;
 
 fn main() {
     // Result type see https://doc.rust-lang.org/rust-by-example/error/result/result_map.html
@@ -40,6 +39,12 @@ fn main() {
         .build()
         .unwrap();
     let endpoint0 = pqp0.endpoint();
+    // See https://doc.rust-lang.org/stable/std/mem
+    // println!("Size of {} ", std::mem::size_of::<QueuePairEndpoint>());
+    let endpoint0_bytes = unsafe {
+        std::mem::transmute::<ibverbs::QueuePairEndpoint, [u8; 24]>(endpoint0)
+    };
+    // QueuePairEndpoint 192 bits
     let pqp1 = pd0
         .create_qp(&send_cq, &recv_cq, ibverbs::ibv_qp_type::IBV_QPT_RC)
         .build()
