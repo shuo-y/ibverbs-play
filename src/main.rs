@@ -30,9 +30,22 @@ fn main() {
 
     println!("Dev guid {} ", dev_guid);
     let ctx = dev.open().unwrap();
-
     let wr_num = 1024;
     let send_cq = ctx.create_cq(wr_num, 0).unwrap();
     let recv_cq = ctx.create_cq(wr_num, 1).unwrap();
 
+    let pd0 = ctx.alloc_pd().unwrap();
+    let pqp0 = pd0
+        .create_qp(&send_cq, &recv_cq, ibverbs::ibv_qp_type::IBV_QPT_RC)
+        .build()
+        .unwrap();
+    let endpoint0 = pqp0.endpoint();
+    let pqp1 = pd0
+        .create_qp(&send_cq, &recv_cq, ibverbs::ibv_qp_type::IBV_QPT_RC)
+        .build()
+        .unwrap();
+    let endpoint1 = pqp1.endpoint();
+    let qp0 = pqp0.handshake(endpoint1);
+    let qp1 = pqp1.handshake(endpoint0);
 }
+
