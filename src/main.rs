@@ -6,10 +6,19 @@
 // See https://doc.rust-lang.org/book/ch05-02-example-structs.html about #[derive(Debug)]
 
 // use std::process::Command;
-// use std::env;
-// use std::ffi::OsString;
 
 fn main() {
+    // 0 for server 1 for client
+    let mut machine = 0;
+    let mut ip = "";
+    // Check arguments see https://doc.rust-lang.org/book/ch12-01-accepting-command-line-arguments.html
+    let args: Vec<String> = std::env::args().collect::<Vec<String>>();
+    if args.len() > 1 {
+        assert!(args.len() >= 3);
+        assert_eq!(&args[1], "--server");
+        ip = &args[2];
+        machine = 1;
+    }
     // Result type see https://doc.rust-lang.org/rust-by-example/error/result/result_map.html
     // Check the type https://stackoverflow.com/questions/21747136/how-do-i-print-the-type-of-a-variable-in-rust
     // See https://doc.rust-lang.org/std/any/fn.type_name.html
