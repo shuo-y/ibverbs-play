@@ -4,6 +4,8 @@
 // Refer to https://github.com/jonhoo/rust-ibverbs/commit/cfbb93771fd180c63ca0ff89d80121674239be9f for the start
 // See https://doc.rust-lang.org/book/ch05-02-example-structs.html about #[derive(Debug)]
 
+use std::io::Read;
+
 fn main() {
     // 0 for server 1 for client
     let mut machine = 0;
@@ -52,11 +54,20 @@ fn main() {
     let tcp_listen = std::net::TcpListener::bind("127.0.0.1:12345").unwrap();
     let total_clients = 1;
     // See https://doc.rust-lang.org/std/net/struct.TcpListener.html
-    for client_id in 0..total_clients {
-        let (_s, address) = tcp_listen.accept().unwrap();
+    for _client_id in 0..total_clients {
+        let (mut stream, address) = tcp_listen.accept().unwrap();
         println!("connect from addrss {:?} ", address);
+        // A buffer for QueuePairEndpoint
+        let mut buffer: [u8; 24] = [0; 24];
+        stream.read(&mut buffer).unwrap();
+        let endpoint1 = unsafe {
+            std::mem::transmute::<[u8; 24], ibverbs::QueuePairEndpoint>(buffer)
+        };
     }
+    let mut buffer: [u8; 24] = [0; 24];
+
     // QueuePairEndpoint 192 bits
+    /*
     let pqp1 = pd0
         .create_qp(&send_cq, &recv_cq, ibverbs::ibv_qp_type::IBV_QPT_RC)
         .build()
@@ -64,5 +75,6 @@ fn main() {
     let endpoint1 = pqp1.endpoint();
     let qp0 = pqp0.handshake(endpoint1);
     let qp1 = pqp1.handshake(endpoint0);
+    */
 }
 
