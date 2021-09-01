@@ -5,6 +5,25 @@
 // See https://doc.rust-lang.org/book/ch05-02-example-structs.html about #[derive(Debug)]
 
 use std::io::Read;
+use std::io::Write;
+
+fn tcp_exchange(_machine: i32, local_endpoint: ibverbs::QueuePairEndpoint) -> ibverbs::QueuePairEndpoint {
+    let tcp_listen = std::net::TcpListener::bind("127.0.0.1:12345").unwrap();
+    // See https://doc.rust-lang.org/std/net/struct.TcpListener.html
+    let (mut stream, address) = tcp_listen.accept().unwrap();
+    println!("connect from addrss {:?} ", address);
+    // A buffer for QueuePairEndpoint
+    let mut remote_endpoint_buffer: [u8; 24] = [0; 24];
+    stream.read(&mut remote_endpoint_buffer).unwrap();
+    let remote_endpoint = unsafe {
+        std::mem::transmute::<[u8; 24], ibverbs::QueuePairEndpoint>(remote_endpoint_buffer)
+    };
+    let mut local_endpoint_buffer = unsafe {
+        std::mem::transmute::<ibverbs::QueuePairEndpoint, [u8; 24]>(local_endpoint)
+    };
+    stream.write(&mut local_endpoint_buffer).unwrap();
+    return remote_endpoint;
+}
 
 fn main() {
     // 0 for server 1 for client
@@ -48,24 +67,7 @@ fn main() {
     let endpoint0 = pqp0.endpoint();
     // See https://doc.rust-lang.org/stable/std/mem
     // println!("Size of {} ", std::mem::size_of::<QueuePairEndpoint>());
-    let endpoint0_bytes = unsafe {
-        std::mem::transmute::<ibverbs::QueuePairEndpoint, [u8; 24]>(endpoint0)
-    };
-    let tcp_listen = std::net::TcpListener::bind("127.0.0.1:12345").unwrap();
-    let total_clients = 1;
-    // See https://doc.rust-lang.org/std/net/struct.TcpListener.html
-    for _client_id in 0..total_clients {
-        let (mut stream, address) = tcp_listen.accept().unwrap();
-        println!("connect from addrss {:?} ", address);
-        // A buffer for QueuePairEndpoint
-        let mut buffer: [u8; 24] = [0; 24];
-        stream.read(&mut buffer).unwrap();
-        let endpoint1 = unsafe {
-            std::mem::transmute::<[u8; 24], ibverbs::QueuePairEndpoint>(buffer)
-        };
-    }
-    let mut buffer: [u8; 24] = [0; 24];
-
+    let remote_endpoint = tcp_exchange(machine, endpoint0);
     // QueuePairEndpoint 192 bits
     /*
     let pqp1 = pd0
