@@ -7,11 +7,11 @@
 use std::io::Read;
 use std::io::Write;
 
-fn tcp_exchange(_machine: i32, local_endpoint: ibverbs::QueuePairEndpoint) -> ibverbs::QueuePairEndpoint {
+fn tcp_exchange_server(local_endpoint: ibverbs::QueuePairEndpoint) -> ibverbs::QueuePairEndpoint {
     let tcp_listen = std::net::TcpListener::bind("127.0.0.1:12345").unwrap();
     // See https://doc.rust-lang.org/std/net/struct.TcpListener.html
     let (mut stream, address) = tcp_listen.accept().unwrap();
-    println!("connect from addrss {:?} ", address);
+    println!("connect with {:?}", address);
     // A buffer for QueuePairEndpoint
     let mut remote_endpoint_buffer: [u8; 24] = [0; 24];
     stream.read(&mut remote_endpoint_buffer).unwrap();
@@ -23,6 +23,36 @@ fn tcp_exchange(_machine: i32, local_endpoint: ibverbs::QueuePairEndpoint) -> ib
     };
     stream.write(&mut local_endpoint_buffer).unwrap();
     return remote_endpoint;
+}
+
+fn tcp_exchange_client(local_endpoint: ibverbs::QueuePairEndpoint, ip: &str) -> ibverbs::QueuePairEndpoint {
+    loop {
+        // See https://doc.rust-lang.org/std/string/struct.String.html
+        let mut addr = String::from("");
+        addr.push_str(ip);
+        addr.push_str(":12345");
+        // See https://doc.rust-lang.org/std/net/struct.TcpStream.html#method.connect
+        if let Ok(mut stream) = std::net::TcpStream::connect(addr) {
+            let mut local_endpoint_buffer = unsafe {
+                std::mem::transmute::<ibverbs::QueuePairEndpoint, [u8; 24]>(local_endpoint)
+            };
+            stream.write(&mut local_endpoint_buffer).unwrap();
+            let mut receive_buffer: [u8; 24] = [0; 24];
+            stream.read(&mut receive_buffer).unwrap();
+            let remote_endpoint = unsafe {
+                std::mem::transmute::<[u8; 24], ibverbs::QueuePairEndpoint>(receive_buffer)
+            };
+            return remote_endpoint;
+        }
+    }
+}
+
+fn tcp_exchange(machine: i32, local_endpoint: ibverbs::QueuePairEndpoint, ip: &str) -> ibverbs::QueuePairEndpoint {
+    if machine == 0 {
+        return tcp_exchange_server(local_endpoint);
+    } else {
+        return tcp_exchange_client(local_endpoint, ip);
+    }
 }
 
 fn main() {
@@ -59,15 +89,16 @@ fn main() {
     let send_cq = ctx.create_cq(wr_num, 0).unwrap();
     let recv_cq = ctx.create_cq(wr_num, 1).unwrap();
 
-    let pd0 = ctx.alloc_pd().unwrap();
-    let pqp0 = pd0
+    let pd = ctx.alloc_pd().unwrap();
+    let pqp = pd
         .create_qp(&send_cq, &recv_cq, ibverbs::ibv_qp_type::IBV_QPT_RC)
         .build()
         .unwrap();
-    let endpoint0 = pqp0.endpoint();
+    let local_endpoint = pqp.endpoint();
     // See https://doc.rust-lang.org/stable/std/mem
     // println!("Size of {} ", std::mem::size_of::<QueuePairEndpoint>());
-    let remote_endpoint = tcp_exchange(machine, endpoint0);
+    let remote_endpoint = tcp_exchange(machine, local_endpoint, ip);
+    let qp = pqp.handshake(remote_endpoint);
     // QueuePairEndpoint 192 bits
     /*
     let pqp1 = pd0
