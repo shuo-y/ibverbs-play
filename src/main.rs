@@ -6,6 +6,7 @@
 
 use std::io::Read;
 use std::io::Write;
+use std::convert::TryInto;
 
 fn tcp_exchange_server(local_endpoint: ibverbs::QueuePairEndpoint) -> ibverbs::QueuePairEndpoint {
     let tcp_listen = std::net::TcpListener::bind("127.0.0.1:12345").unwrap();
@@ -98,16 +99,27 @@ fn main() {
     // See https://doc.rust-lang.org/stable/std/mem
     // println!("Size of {} ", std::mem::size_of::<QueuePairEndpoint>());
     let remote_endpoint = tcp_exchange(machine, local_endpoint, ip);
-    let qp = pqp.handshake(remote_endpoint);
+    let mut qp = pqp.handshake(remote_endpoint).unwrap();
     // QueuePairEndpoint 192 bits
-    /*
-    let pqp1 = pd0
-        .create_qp(&send_cq, &recv_cq, ibverbs::ibv_qp_type::IBV_QPT_RC)
-        .build()
-        .unwrap();
-    let endpoint1 = pqp1.endpoint();
-    let qp0 = pqp0.handshake(endpoint1);
-    let qp1 = pqp1.handshake(endpoint0);
-    */
+    let mut mr = pd.allocate::<u8>(4096).unwrap();
+    if machine == 0 {
+        unsafe {
+            qp.post_receive(&mut mr, ..1024, 0)
+        }.unwrap();
+        let mut complete = [ibverbs::ibv_wc::default(); 1024];
+        loop {
+            let completed = recv_cq.poll(&mut complete).unwrap();
+            if completed.len() > 0 {
+                let data = unsafe {
+                    std::mem::transmute::<[u8; 8], u64>(mr[..8]
+                        .try_into()
+                        .expect("Convert error"))
+                };
+                // See https://stackoverflow.com/questions/25428920/how-to-get-a-slice-as-an-array-in-rust
+                println!("receive {}", data);
+                break;
+            }
+        }
+    }
 }
 
