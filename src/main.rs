@@ -56,6 +56,29 @@ fn tcp_exchange(machine: i32, local_endpoint: ibverbs::QueuePairEndpoint, ip: &s
     }
 }
 
+fn server_func(qp: &mut ibverbs::QueuePair,
+               mr: &mut ibverbs::MemoryRegion<u8>,
+               send_cq: &ibverbs::CompletionQueue,
+               recv_cq: &ibverbs::CompletionQueue) {
+    unsafe {
+        qp.post_receive(mr, ..1024, 0)
+    }.unwrap();
+    let mut complete = [ibverbs::ibv_wc::default(); 1024];
+    loop {
+        let completed = recv_cq.poll(&mut complete).unwrap();
+        if completed.len() > 0 {
+        let data = unsafe {
+            std::mem::transmute::<[u8; 8], u64>(mr[..8]
+            .try_into()
+            .expect("Convert error"))
+        };
+        // See https://stackoverflow.com/questions/25428920/how-to-get-a-slice-as-an-array-in-rust
+        println!("receive {}", data);
+        break;
+        }
+    }
+}
+
 fn main() {
     // 0 for server 1 for client
     let mut machine = 0;
@@ -103,23 +126,7 @@ fn main() {
     // QueuePairEndpoint 192 bits
     let mut mr = pd.allocate::<u8>(4096).unwrap();
     if machine == 0 {
-        unsafe {
-            qp.post_receive(&mut mr, ..1024, 0)
-        }.unwrap();
-        let mut complete = [ibverbs::ibv_wc::default(); 1024];
-        loop {
-            let completed = recv_cq.poll(&mut complete).unwrap();
-            if completed.len() > 0 {
-                let data = unsafe {
-                    std::mem::transmute::<[u8; 8], u64>(mr[..8]
-                        .try_into()
-                        .expect("Convert error"))
-                };
-                // See https://stackoverflow.com/questions/25428920/how-to-get-a-slice-as-an-array-in-rust
-                println!("receive {}", data);
-                break;
-            }
-        }
+        server_func(&mut qp, &mut mr, &send_cq, &recv_cq);
     }
 }
 
