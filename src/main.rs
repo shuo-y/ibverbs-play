@@ -79,6 +79,23 @@ fn server_func(qp: &mut ibverbs::QueuePair,
     }
 }
 
+fn client_func(qp: &mut ibverbs::QueuePair,
+               mr: &mut ibverbs::MemoryRegion<u8>,
+               send_cq: &ibverbs::CompletionQueue,
+               recv_cq: &ibverbs::CompletionQueue) {
+    mr[0] = 222;
+    unsafe {
+        qp.post_send(mr, ..1024, 0)
+    }.unwrap();
+    let mut complete = [ibverbs::ibv_wc::default(); 1024];
+    loop {
+        let completed = send_cq.poll(&mut complete).unwrap();
+        if completed.len() > 0 {
+            break;
+        }
+    }
+}
+
 fn main() {
     // 0 for server 1 for client
     let mut machine = 0;
@@ -127,6 +144,8 @@ fn main() {
     let mut mr = pd.allocate::<u8>(4096).unwrap();
     if machine == 0 {
         server_func(&mut qp, &mut mr, &send_cq, &recv_cq);
+    } else {
+        client_func(&mut qp, &mut mr, &send_cq, &recv_cq);
     }
 }
 
