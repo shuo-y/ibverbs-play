@@ -6,8 +6,10 @@ use std::collections::HashMap;
 
 fn return_array(val: usize) -> [u32; 8] {
     let mut ret = [0; 8];
-    for i in 0..val {
+    for i in 1..val {
         ret[i] = 10;
+        let p = &ret[i - 1];
+        println!("{}", *p);
     }
     return ret;
 }
