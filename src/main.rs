@@ -111,19 +111,11 @@ fn main() {
     // See https://doc.rust-lang.org/std/any/fn.type_name.html
     // See rustc --explain E0515
     // See https://doc.rust-lang.org/book/ch13-01-closures.html
-    let devices = ibverbs::devices().unwrap();
-    let get_dev = |x| {
-        devices.get(x)
-    };
-    let get_dev_num = |x: &ibverbs::DeviceList| {
-        x.len()
-    };
-    println!("{}", get_dev_num(&devices));
-    let dev = get_dev(0).unwrap();
-    let dev_guid = dev.guid().unwrap();
-
-    println!("Dev guid {} ", dev_guid);
-    let ctx = dev.open().unwrap();
+    let ctx = ibverbs::devices()
+        .unwrap()
+        .get(0)
+        .unwrap()
+        .open().unwrap();
     let wr_num = 1024;
     let send_cq = ctx.create_cq(wr_num, 0).unwrap();
     let recv_cq = ctx.create_cq(wr_num, 1).unwrap();
